@@ -16,5 +16,6 @@ lazy val root = (project in file("."))
       "ch.qos.logback" % "logback-classic" % "1.5.6" % "runtime",
       "jakarta.servlet" % "jakarta.servlet-api" % "6.0.0" % "provided",
       "org.eclipse.jetty" % "jetty-webapp" % "11.0.20" % "container;compile",
+      "com.datastax.oss" % "java-driver-core" % "4.17.0"
     )
   )
