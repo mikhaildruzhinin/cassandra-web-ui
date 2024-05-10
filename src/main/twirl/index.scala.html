@@ -1,7 +1,26 @@
-@(date: java.util.Date)
+@(cql: Option[String])
 
-<html>
+<html lang="en">
+<head>
+    <title>Cassandra Web UI</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+</head>
 <body>
-    <h1>Twirl reporting for duty at @date.toString!</h1>
+    <div class="container">
+        <h1>Cassandra Web UI</h1>
+        <form method="POST" class="form-horizontal" id="query-form">
+            <div>
+                <label for="query" class="col-sm-2 control-label">Enter your query: </label>
+            </div>
+            <br>
+            <div class="col-sm-10">
+                <textarea rows="9" cols="70" name="query" id="query" form="query-form">@cql</textarea>
+            </div>
+            <br>
+            <div>
+                <input type="submit" value="Execute" class="btn btn-primary">
+            </div>
+        </form>
+    </div>
 </body>
 </html>

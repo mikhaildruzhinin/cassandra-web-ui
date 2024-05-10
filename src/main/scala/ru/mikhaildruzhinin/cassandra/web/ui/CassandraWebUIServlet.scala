@@ -3,19 +3,27 @@ package ru.mikhaildruzhinin.cassandra.web.ui
 import com.datastax.oss.driver.api.core.CqlSession
 import com.datastax.oss.driver.api.core.cql.{ColumnDefinition, ResultSet}
 import org.scalatra._
+import org.scalatra.forms._
+import org.scalatra.i18n.I18nSupport
+import org.slf4j.{Logger, LoggerFactory}
 
-import java.util.Date
 import scala.jdk.CollectionConverters._
 
-class CassandraWebUIServlet extends ScalatraServlet {
+class CassandraWebUIServlet extends ScalatraServlet with FormSupport with I18nSupport {
+
+  private val logger: Logger =  LoggerFactory.getLogger(getClass)
+
   get("/") {
-    html.index.render(new Date)
+    html.index(None)
   }
 
-  get("/cql") {
+  post("/") {
+    val query = params("query")
+    logger.info(query)
 
     val session: CqlSession = CqlSession.builder().build()
-    val resultSet: ResultSet = session.execute("describe tables")
+    val resultSet: ResultSet = session.execute(query)  // "describe tables"
+    session.close()
 
     val columnDefinitions: List[ColumnDefinition] = resultSet
       .getColumnDefinitions
@@ -31,6 +39,8 @@ class CassandraWebUIServlet extends ScalatraServlet {
       .toList
       .map(row => columnDefinitions.map(col => row.get(col.getName, classOf[String])).mkString(", "))
 
-      columnNames.mkString(", ") + "\n" + rows.mkString("\n")
+    logger.info(columnNames.mkString(", ") + "\n" + rows.mkString("\n"))
+
+    html.index(Some(query))
   }
 }
