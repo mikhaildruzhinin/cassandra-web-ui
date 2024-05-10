@@ -1,14 +1,18 @@
 package ru.mikhaildruzhinin.cassandra.web.ui
 
-import com.datastax.oss.driver.api.core.`type`.DataType
-import com.datastax.oss.driver.api.core.{CqlIdentifier, CqlSession}
+import com.datastax.oss.driver.api.core.CqlSession
 import com.datastax.oss.driver.api.core.cql.{ColumnDefinition, ResultSet}
 import org.scalatra._
 
+import java.util.Date
 import scala.jdk.CollectionConverters._
 
 class CassandraWebUIServlet extends ScalatraServlet {
   get("/") {
+    html.index.render(new Date)
+  }
+
+  get("/cql") {
 
     val session: CqlSession = CqlSession.builder().build()
     val resultSet: ResultSet = session.execute("describe tables")
