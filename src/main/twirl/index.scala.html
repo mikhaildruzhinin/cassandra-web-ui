@@ -1,4 +1,4 @@
-@(cql: Option[String])
+@(cql: Option[String], result: Option[String], hasMorePages: Boolean)
 
 <html lang="en">
 <head>
@@ -21,6 +21,8 @@
                 <input type="submit" value="Execute" class="btn btn-primary">
             </div>
         </form>
+        <p>@result</p>
+        <p>@hasMorePages</p>
     </div>
 </body>
 </html>

@@ -1,46 +1,42 @@
 package ru.mikhaildruzhinin.cassandra.web.ui
 
 import com.datastax.oss.driver.api.core.CqlSession
-import com.datastax.oss.driver.api.core.cql.{ColumnDefinition, ResultSet}
 import org.scalatra._
 import org.scalatra.forms._
 import org.scalatra.i18n.I18nSupport
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
+import scala.jdk.FutureConverters._
 
-class CassandraWebUIServlet extends ScalatraServlet with FormSupport with I18nSupport {
+class CassandraWebUIServlet(eventualCqlSession: Future[CqlSession]) extends ScalatraServlet
+  with FormSupport with I18nSupport with FutureSupport {
+
+  override protected implicit def executor: ExecutionContext = ExecutionContext.global
 
   private val logger: Logger =  LoggerFactory.getLogger(getClass)
 
   get("/") {
-    html.index(None)
+    new AsyncResult() { override val is: Future[_] =
+      Future(html.index(None, None, false))
+    }
   }
 
   post("/") {
-    val query = params("query")
-    logger.info(query)
-
-    val session: CqlSession = CqlSession.builder().build()
-    val resultSet: ResultSet = session.execute(query)  // "describe tables"
-    session.close()
-
-    val columnDefinitions: List[ColumnDefinition] = resultSet
-      .getColumnDefinitions
-      .iterator()
-      .asScala
-      .toList
-
-    val columnNames: List[String] = columnDefinitions.map(_.getName.asCql(true))
-
-    val rows: List[String] = resultSet
-      .iterator()
-      .asScala
-      .toList
-      .map(row => columnDefinitions.map(col => row.get(col.getName, classOf[String])).mkString(", "))
-
-    logger.info(columnNames.mkString(", ") + "\n" + rows.mkString("\n"))
-
-    html.index(Some(query))
+    new AsyncResult() { override val is: Future[_] =
+      for {
+        query <- Future.successful(params("query"))
+        _ = logger.info(query)
+        cqlSession <- eventualCqlSession
+        resultSet <- cqlSession.executeAsync(query).asScala // "describe tables"
+        columnDefinitions = resultSet.getColumnDefinitions.iterator().asScala
+        columnNames = columnDefinitions.map(_.getName.asCql(true))
+        rows = resultSet.currentPage().asScala.map { row =>
+          columnDefinitions.map(col => row.get(col.getName, classOf[String])).mkString(", ")
+        }
+        result: String = columnNames.mkString(", ") + "\n" + rows.mkString("\n")
+      } yield html.index(Some(query), Some(result), resultSet.hasMorePages)
+    }
   }
 }
